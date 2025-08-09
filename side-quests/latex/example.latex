@@ -1,0 +1,11 @@
+\documentclass[varwidth=true,border=5pt]{standalone}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\begin{document}
+$$
+\frac{\pi}{2} = \int_{-1}^{1} \sqrt{1-x^2}\ dx
+\left( \Gamma \right)
+$$
+\end{document}
