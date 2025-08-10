@@ -6,4 +6,4 @@ Current goal is real time latex rendering, perhaps even as a neovim plugin
 - [X] Render the mandelbrot set
 - [ ] Resize images (make them smaller mostly)
 - [ ] Render latex without tears (Both kind of tears)
-- [ ] Maybe GIF? 
+- [X] Maybe GIF?

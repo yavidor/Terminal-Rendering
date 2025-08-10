@@ -5,28 +5,56 @@ import (
 	"image"
 	"log"
 	"os"
+	"strings"
+	"time"
 
-	_ "image/gif"
+	"image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 )
 
-func main() {
-	reader, err := os.Open(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer reader.Close()
-	m, _, err := image.Decode(reader)
-	if err != nil {
-		log.Fatal(err)
-	}
+func renderImage(m image.Image) {
+	fmt.Print("\033[H\033[2J")
 	bounds := m.Bounds()
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			red, green, blue, _ := m.At(x, y).RGBA()
-			fmt.Printf("\033[38;2;%d;%d;%dmX", red/255, green/255, blue/255)
+			fmt.Printf("\033[38;2;%d;%d;%dm█", red/255, green/255, blue/255)
 		}
 		fmt.Println()
+	}
+
+}
+
+func main() {
+	imageName := os.Args[1]
+	reader, err := os.Open(imageName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer reader.Close()
+	if strings.HasSuffix(imageName, ".gif") {
+		gifs, err := gif.DecodeAll(reader)
+		if err != nil {
+			log.Fatal(err)
+		}
+		images := gifs.Image
+		for _, m := range images {
+			renderImage(m)
+			time.Sleep(time.Second / 10)
+		}
+
+	} else {
+
+		var images []*image.Image
+		imageObject, _, err := image.Decode(reader)
+		if err != nil {
+			log.Fatal(err)
+		}
+		images = append(images, &imageObject)
+
+		for _, m := range images {
+			renderImage(*m)
+		}
 	}
 }

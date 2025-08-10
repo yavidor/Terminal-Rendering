@@ -32,12 +32,12 @@ func HSLtoRGB(h, s, l float64) (int, int, int) {
 }
 
 func main() {
-	scale := float64(200)
+	scale := float64(80)
 	minX := -2.0 * scale
 	maxX := .47 * scale
 	minY := -1.12 * scale
 	maxY := 1.12 * scale
-	maxIter := 2000
+	maxIter := 200
 	pallette := make([][]int, maxIter)
 	for i := range maxIter {
 		pallette[i] = []int{
