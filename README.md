@@ -7,3 +7,4 @@ Current goal is real time latex rendering, perhaps even as a neovim plugin
 - [ ] Resize images (make them smaller mostly)
 - [ ] Render latex without tears (Both kind of tears)
 - [X] Maybe GIF?
+- [ ] Render BMP without using the image lib
