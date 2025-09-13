@@ -11,7 +11,26 @@ import (
 
 const FILE_NAME = "./images/greenland_grid_velo.bmp"
 
-type Stucture interface {
+type CompressionType int
+
+const (
+	BI_RGB            CompressionType = 0
+	BI_RLE8           CompressionType = 1
+	BI_RLE4           CompressionType = 2
+	BI_BITFIELDS      CompressionType = 3
+	BI_JPEG           CompressionType = 4
+	BI_PNG            CompressionType = 5
+	BI_ALPHABITFIELDS CompressionType = 6
+	BI_CMYK           CompressionType = 11
+	BI_CMYKRLE8       CompressionType = 12
+	BI_CMYKRLE4       CompressionType = 13
+)
+
+type Integer interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
+}
+
+type Structure interface {
 }
 
 func BytesToInteger[T Integer](bytes []byte, size int) T {
@@ -49,6 +68,7 @@ func InitChunk[T Integer]() *chunk[T] {
 	}
 }
 
+// Overall 14 bytes
 type FileHeader struct {
 	Signature  *chunk[uint16]
 	Size       *chunk[uint32]
@@ -67,20 +87,44 @@ func InitHeader() *FileHeader {
 	}
 }
 
+type InfoHeader struct {
+	Size                *chunk[uint32]
+	Width               *chunk[int32]
+	Height              *chunk[int16]
+	Planes              *chunk[uint16]
+	BitCount            *chunk[uint16]
+	Compression         *chunk[uint32]
+	ImageSize           *chunk[uint32]
+	XPixelsPerMeter     *chunk[int32]
+	YPixelsPerMeter     *chunk[int32]
+	ColorCount          *chunk[uint32]
+	ImportantColorCount *chunk[uint32]
+}
+
 type BMP struct {
+	Header *FileHeader
 }
 
-type Integer interface {
-	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
-}
-
-func readStructure(reader *bufio.Reader, st Stucture) {
+func readStructure(reader *bufio.Reader, st Structure) {
 	v := reflect.ValueOf(st).Elem()
 	for i := range v.NumField() {
 		field := v.Field(i)
 		field.MethodByName("Read").Call([]reflect.Value{reflect.ValueOf(reader)})
 	}
+}
+
+func printStructure(st Structure) {
+	v := reflect.ValueOf(st).Elem()
+	for i := range v.NumField() {
+		field := v.Field(i)
+		if field.Kind() == reflect.Int {
+			fmt.Printf("%X\n", field.Elem().FieldByName("Data").Int())
+		} else {
+
+			fmt.Printf("%s - 0x%X\n", v.Type().Field(i).Name, field.Elem().FieldByName("Data").Uint())
+		}
+	}
+
 }
 
 func main() {
@@ -91,5 +135,5 @@ func main() {
 	}
 	header := InitHeader()
 	readStructure(reader, header)
-	fmt.Printf("%x\n%x\n", header.Signature.Data, header.Size.Data)
+	printStructure(header)
 }
