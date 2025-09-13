@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -8,21 +9,62 @@ import (
 	"unsafe"
 )
 
-func BytesToInteger[T Integer](bytes []byte, offset int) T {
+const FILE_NAME = "./images/greenland_grid_velo.bmp"
+
+type Stucture interface {
+}
+
+func BytesToInteger[T Integer](bytes []byte, size int) T {
 	var result T
-	size := min(len(bytes)-offset, int(unsafe.Sizeof(result)))
+	size = min(len(bytes), size)
 	for i := range size {
-		result |= T(bytes[i+offset]) << ((size - 1 - i) * 8)
+		result |= T(bytes[i]) << ((size - 1 - i) * 8)
 	}
 	return result
 }
 
+type chunk[T Integer] struct {
+	Size int
+	Data T
+}
+
+func (c *chunk[T]) Read(b *bufio.Reader) error {
+	rawData := make([]byte, c.Size)
+	for i := range c.Size {
+		nextByte, err := b.ReadByte()
+		if err != nil {
+			return err
+		}
+		rawData[i] = nextByte
+	}
+	c.Data = BytesToInteger[T](rawData, c.Size)
+	return nil
+}
+
+func InitChunk[T Integer]() *chunk[T] {
+	var zero T
+	return &chunk[T]{
+		Size: int(unsafe.Sizeof(zero)),
+		Data: 0,
+	}
+}
+
 type FileHeader struct {
-	Signature  uint16
-	Size       uint32
-	ReservedI  uint16
-	ReservedII uint16
-	Offset     uint32
+	Signature  *chunk[uint16]
+	Size       *chunk[uint32]
+	ReservedI  *chunk[uint16]
+	ReservedII *chunk[uint16]
+	Offset     *chunk[uint32]
+}
+
+func InitHeader() *FileHeader {
+	return &FileHeader{
+		Signature:  InitChunk[uint16](),
+		Size:       InitChunk[uint32](),
+		ReservedI:  InitChunk[uint16](),
+		ReservedII: InitChunk[uint16](),
+		Offset:     InitChunk[uint32](),
+	}
 }
 
 type BMP struct {
@@ -33,49 +75,21 @@ type Integer interface {
 		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
 }
 
-func (fh *FileHeader) read(data []byte, offset int) int {
-	v := reflect.ValueOf(fh).Elem()
+func readStructure(reader *bufio.Reader, st Stucture) {
+	v := reflect.ValueOf(st).Elem()
 	for i := range v.NumField() {
 		field := v.Field(i)
-		switch field.Kind() {
-		case reflect.Int8:
-			field.SetInt(int64(BytesToInteger[int8](data, offset)))
-			offset += 1
-		case reflect.Int16:
-			field.SetInt(int64(BytesToInteger[int16](data, offset)))
-			offset += 2
-		case reflect.Int32:
-			field.SetInt(int64(BytesToInteger[int32](data, offset)))
-			offset += 3
-		case reflect.Int64:
-			field.SetInt(int64(BytesToInteger[int64](data, offset)))
-			offset += 4
-		case reflect.Uint8:
-			field.SetUint(uint64(BytesToInteger[uint8](data, offset)))
-			offset += 1
-		case reflect.Uint16:
-			field.SetUint(uint64(BytesToInteger[uint16](data, offset)))
-			offset += 2
-		case reflect.Uint32:
-			field.SetUint(uint64(BytesToInteger[uint32](data, offset)))
-			offset += 3
-		case reflect.Uint64:
-			field.SetUint(uint64(BytesToInteger[uint64](data, offset)))
-			offset += 4
-		}
+		field.MethodByName("Read").Call([]reflect.Value{reflect.ValueOf(reader)})
 	}
-	return offset
 }
 
-const FILE_NAME = "./images/greenland_grid_velo.bmp"
-
 func main() {
-	data, err := os.ReadFile(FILE_NAME)
+	data, err := os.Open(FILE_NAME)
+	reader := bufio.NewReader(data)
 	if err != nil {
 		log.Fatal(err)
 	}
-	header := FileHeader{}
-	header.read(data, 0)
-	fmt.Printf("%+v\n", header)
-	fmt.Printf("%#v\n", header)
+	header := InitHeader()
+	readStructure(reader, header)
+	fmt.Printf("%x\n%x\n", header.Signature.Data, header.Size.Data)
 }

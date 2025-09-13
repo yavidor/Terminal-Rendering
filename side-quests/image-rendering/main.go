@@ -15,14 +15,18 @@ import (
 
 func renderImage(m image.Image) {
 	fmt.Print("\033[H\033[2J")
+	output := ""
 	bounds := m.Bounds()
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			red, green, blue, _ := m.At(x, y).RGBA()
-			fmt.Printf("\033[38;2;%d;%d;%dm█", red/255, green/255, blue/255)
+			output += fmt.Sprintf("\033[38;2;%d;%d;%dm█", red/255, green/255, blue/255)
+			// fmt.Printf("\033[38;2;%d;%d;%dm█", red/255, green/255, blue/255)
 		}
-		fmt.Println()
+		output += "\n"
+		// fmt.Println()
 	}
+	fmt.Print(output)
 
 }
 
