@@ -9,7 +9,8 @@ import (
 	"unsafe"
 )
 
-const FILE_NAME = "./images/greenland_grid_velo.bmp"
+// const FILE_NAME = "./images/greenland_grid_velo.bmp"
+const FILE_NAME = "./images/video-001.bmp"
 
 type CompressionType int
 
@@ -31,13 +32,14 @@ type Integer interface {
 }
 
 type Structure interface {
+	Init()
 }
 
 func BytesToInteger[T Integer](bytes []byte, size int) T {
 	var result T
 	size = min(len(bytes), size)
 	for i := range size {
-		result |= T(bytes[i]) << ((size - 1 - i) * 8)
+		result |= T(bytes[i]) << (i * 8)
 	}
 	return result
 }
@@ -77,32 +79,45 @@ type FileHeader struct {
 	Offset     *chunk[uint32]
 }
 
-func InitHeader() *FileHeader {
-	return &FileHeader{
-		Signature:  InitChunk[uint16](),
-		Size:       InitChunk[uint32](),
-		ReservedI:  InitChunk[uint16](),
-		ReservedII: InitChunk[uint16](),
-		Offset:     InitChunk[uint32](),
-	}
+func (fh *FileHeader) Init() {
+	fh.Signature = InitChunk[uint16]()
+	fh.Size = InitChunk[uint32]()
+	fh.ReservedI = InitChunk[uint16]()
+	fh.ReservedII = InitChunk[uint16]()
+	fh.Offset = InitChunk[uint32]()
 }
 
 type InfoHeader struct {
 	Size                *chunk[uint32]
-	Width               *chunk[int32]
-	Height              *chunk[int16]
+	Width               *chunk[uint32]
+	Height              *chunk[uint32]
 	Planes              *chunk[uint16]
 	BitCount            *chunk[uint16]
 	Compression         *chunk[uint32]
 	ImageSize           *chunk[uint32]
-	XPixelsPerMeter     *chunk[int32]
-	YPixelsPerMeter     *chunk[int32]
+	XPixelsPerMeter     *chunk[uint32]
+	YPixelsPerMeter     *chunk[uint32]
 	ColorCount          *chunk[uint32]
 	ImportantColorCount *chunk[uint32]
 }
 
+func (ih *InfoHeader) Init() {
+	ih.Size = InitChunk[uint32]()
+	ih.Width = InitChunk[uint32]()
+	ih.Height = InitChunk[uint32]()
+	ih.Planes = InitChunk[uint16]()
+	ih.BitCount = InitChunk[uint16]()
+	ih.Compression = InitChunk[uint32]()
+	ih.ImageSize = InitChunk[uint32]()
+	ih.XPixelsPerMeter = InitChunk[uint32]()
+	ih.YPixelsPerMeter = InitChunk[uint32]()
+	ih.ColorCount = InitChunk[uint32]()
+	ih.ImportantColorCount = InitChunk[uint32]()
+}
+
 type BMP struct {
-	Header *FileHeader
+	fileHeader *Structure
+	infoHeader *Structure
 }
 
 func readStructure(reader *bufio.Reader, st Structure) {
@@ -113,18 +128,19 @@ func readStructure(reader *bufio.Reader, st Structure) {
 	}
 }
 
-func printStructure(st Structure) {
+func printStructure(st Structure) error {
 	v := reflect.ValueOf(st).Elem()
+	fmt.Println(v.Type().Name())
 	for i := range v.NumField() {
-		field := v.Field(i)
-		if field.Kind() == reflect.Int {
-			fmt.Printf("%X\n", field.Elem().FieldByName("Data").Int())
+		fieldValue := v.Field(i).Elem()
+		fieldType := v.Type().Field(i)
+		if fieldValue.FieldByName("Data").CanUint() {
+			fmt.Printf("\t%s - %s: 0x%X | %d\n", fieldType.Name, fieldValue.Field(1).Type(), fieldValue.FieldByName("Data").Uint(), fieldValue.FieldByName("Data").Uint())
 		} else {
-
-			fmt.Printf("%s - 0x%X\n", v.Type().Field(i).Name, field.Elem().FieldByName("Data").Uint())
+			return fmt.Errorf("field %s of struct %s has invalid type %s", fieldType.Name, v.Type().Name(), fieldValue.Field(1).Type())
 		}
 	}
-
+	return nil
 }
 
 func main() {
@@ -133,7 +149,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	header := InitHeader()
-	readStructure(reader, header)
-	printStructure(header)
+	fileHeader := &FileHeader{}
+	fileHeader.Init()
+	readStructure(reader, fileHeader)
+	err = printStructure(fileHeader)
+	if err != nil {
+		panic(err)
+	}
+	infoHeader := &InfoHeader{}
+	infoHeader.Init()
+	readStructure(reader, infoHeader)
+	err = printStructure(infoHeader)
+	if err != nil {
+		panic(err)
+	}
 }
