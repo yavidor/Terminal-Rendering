@@ -9,9 +9,6 @@ import (
 	"unsafe"
 )
 
-// const FILE_NAME = "./images/greenland_grid_velo.bmp"
-const FILE_NAME = "./images/video-001.bmp"
-
 type CompressionType int
 
 const (
@@ -95,8 +92,8 @@ type InfoHeader struct {
 	BitCount            *chunk[uint16]
 	Compression         *chunk[uint32]
 	ImageSize           *chunk[uint32]
-	XPixelsPerMeter     *chunk[uint32]
-	YPixelsPerMeter     *chunk[uint32]
+	XPixelsPerMetre     *chunk[uint32]
+	YPixelsPerMetre     *chunk[uint32]
 	ColorCount          *chunk[uint32]
 	ImportantColorCount *chunk[uint32]
 }
@@ -109,8 +106,8 @@ func (ih *InfoHeader) Init() {
 	ih.BitCount = InitChunk[uint16]()
 	ih.Compression = InitChunk[uint32]()
 	ih.ImageSize = InitChunk[uint32]()
-	ih.XPixelsPerMeter = InitChunk[uint32]()
-	ih.YPixelsPerMeter = InitChunk[uint32]()
+	ih.XPixelsPerMetre = InitChunk[uint32]()
+	ih.YPixelsPerMetre = InitChunk[uint32]()
 	ih.ColorCount = InitChunk[uint32]()
 	ih.ImportantColorCount = InitChunk[uint32]()
 }
@@ -144,7 +141,14 @@ func printStructure(st Structure) error {
 }
 
 func main() {
-	data, err := os.Open(FILE_NAME)
+	var imageName string
+	fmt.Println(os.Args)
+	if len(os.Args) < 2 {
+		imageName = "./images/greenland_grid_velo.bmp"
+	} else {
+		imageName = os.Args[1]
+	}
+	data, err := os.Open(imageName)
 	reader := bufio.NewReader(data)
 	if err != nil {
 		log.Fatal(err)
