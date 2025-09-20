@@ -112,9 +112,22 @@ func (ih *InfoHeader) Init() {
 	ih.ImportantColorCount = InitChunk[uint32]()
 }
 
+type Pixel struct {
+	Red   *chunk[uint8]
+	Green *chunk[uint8]
+	Blue  *chunk[uint8]
+}
+
+func (p *Pixel) Init() {
+	p.Red = InitChunk[uint8]()
+	p.Green = InitChunk[uint8]()
+	p.Blue = InitChunk[uint8]()
+}
+
 type BMP struct {
 	fileHeader *Structure
 	infoHeader *Structure
+	Pixels     *[]Structure
 }
 
 func readStructure(reader *bufio.Reader, st Structure) {
@@ -166,5 +179,22 @@ func main() {
 	err = printStructure(infoHeader)
 	if err != nil {
 		panic(err)
+	}
+	pixels := []*Pixel{}
+	for range infoHeader.Height.Data * infoHeader.Width.Data {
+		pixel := &Pixel{}
+		pixel.Init()
+		readStructure(reader, pixel)
+		pixels = append(pixels, pixel)
+		// err = printStructure(pixel)
+	}
+	var i uint32 = 0
+	for _, pixel := range pixels {
+		fmt.Printf("\033[38;2;%d;%d;%dm█", pixel.Red.Data, pixel.Green.Data, pixel.Blue.Data)
+		i++
+		if i == infoHeader.Width.Data {
+			i = 0
+			fmt.Println()
+		}
 	}
 }
