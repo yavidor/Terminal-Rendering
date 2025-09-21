@@ -188,12 +188,13 @@ func main() {
 		pixels = append(pixels, pixel)
 		// err = printStructure(pixel)
 	}
-	var i uint32 = 0
-	for _, pixel := range pixels {
+	var counter uint32 = 0
+	for i := len(pixels) - 1; i >= 0; i-- {
+		pixel := pixels[i]
 		fmt.Printf("\033[38;2;%d;%d;%dm█", pixel.Red.Data, pixel.Green.Data, pixel.Blue.Data)
-		i++
-		if i == infoHeader.Width.Data {
-			i = 0
+		counter++
+		if counter == infoHeader.Width.Data {
+			counter = 0
 			fmt.Println()
 		}
 	}
