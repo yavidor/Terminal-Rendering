@@ -30,13 +30,13 @@ func main() {
 	imageName := os.Args[1]
 	reader, err := os.Open(imageName)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err, "1")
 	}
 	defer reader.Close()
 	if strings.HasSuffix(imageName, ".gif") {
 		gifs, err := gif.DecodeAll(reader)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(err, "2")
 		}
 		images := gifs.Image
 		for _, m := range images {
@@ -48,7 +48,7 @@ func main() {
 		var images []*image.Image
 		imageObject, _, err := image.Decode(reader)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(err, "3")
 		}
 		images = append(images, &imageObject)
 
