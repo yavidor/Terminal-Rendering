@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"math"
 	"math/cmplx"
-	"math/rand/v2"
+
+	catppuccin "github.com/catppuccin/go"
 )
 
 func HSLtoRGB(h, s, l float64) (int, int, int) {
@@ -31,25 +32,48 @@ func HSLtoRGB(h, s, l float64) (int, int, int) {
 	return int(r1) + m, int(g1) + m, int(b1) + m
 }
 
+func addColors(colorArray *[][3]uint8, flavor catppuccin.Flavor) {
+	*colorArray = append(*colorArray, flavor.Rosewater().RGB)
+	*colorArray = append(*colorArray, flavor.Flamingo().RGB)
+	*colorArray = append(*colorArray, flavor.Pink().RGB)
+	*colorArray = append(*colorArray, flavor.Mauve().RGB)
+	*colorArray = append(*colorArray, flavor.Red().RGB)
+	*colorArray = append(*colorArray, flavor.Maroon().RGB)
+	*colorArray = append(*colorArray, flavor.Peach().RGB)
+	*colorArray = append(*colorArray, flavor.Yellow().RGB)
+	*colorArray = append(*colorArray, flavor.Green().RGB)
+	*colorArray = append(*colorArray, flavor.Teal().RGB)
+	*colorArray = append(*colorArray, flavor.Sky().RGB)
+	*colorArray = append(*colorArray, flavor.Sapphire().RGB)
+	*colorArray = append(*colorArray, flavor.Blue().RGB)
+	*colorArray = append(*colorArray, flavor.Lavender().RGB)
+	*colorArray = append(*colorArray, flavor.Text().RGB)
+	*colorArray = append(*colorArray, flavor.Subtext1().RGB)
+	*colorArray = append(*colorArray, flavor.Subtext0().RGB)
+	*colorArray = append(*colorArray, flavor.Overlay2().RGB)
+	*colorArray = append(*colorArray, flavor.Overlay1().RGB)
+	*colorArray = append(*colorArray, flavor.Overlay0().RGB)
+	*colorArray = append(*colorArray, flavor.Surface2().RGB)
+	*colorArray = append(*colorArray, flavor.Surface1().RGB)
+	*colorArray = append(*colorArray, flavor.Surface0().RGB)
+	*colorArray = append(*colorArray, flavor.Crust().RGB)
+	*colorArray = append(*colorArray, flavor.Mantle().RGB)
+	*colorArray = append(*colorArray, flavor.Base().RGB)
+}
 func main() {
-	scale := float64(80)
+	scale := float64(100)
 	minX := -2.0 * scale
 	maxX := .47 * scale
 	minY := -1.12 * scale
 	maxY := 1.12 * scale
 	maxIter := 200
-	pallette := make([][]int, maxIter)
-	for i := range maxIter {
-		pallette[i] = []int{
-			rand.IntN(255),
-			rand.IntN(255),
-			rand.IntN(255),
-		}
-	}
+	flavor := catppuccin.Mocha
+	colors := [][3]uint8{}
+	addColors(&colors, flavor)
+	fmt.Println(len(colors))
 	for y := minY; y < maxY; y++ {
 		for x := minX; x < maxX; x++ {
 			z := complex128(0)
-
 			i := 0
 			for i = range maxIter {
 				z = cmplx.Pow(z, 2) + complex(float64(x)/scale, float64(y)/200)
@@ -61,7 +85,8 @@ func main() {
 				fmt.Printf("\033[30m■")
 			} else {
 				// r, g, b := HSLtoRGB(float64(int(math.Pow((float64(i)/float64(maxIter))*360, 1.5))%360), 0.5, (float64(i) / float64(maxIter) * 20 * 5))
-				fmt.Printf("\033[38;2;%d;%d;%dm■", pallette[i][0], pallette[i][1], pallette[i][2])
+				colorIndex := i % len(colors)
+				fmt.Printf("\033[38;2;%d;%d;%dm■", colors[colorIndex][0], colors[colorIndex][1], colors[colorIndex][2])
 				// fmt.Printf("\033[38;2;%d;%d;%dm■", r, g, b)
 			}
 		}
